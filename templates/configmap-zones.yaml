@@ -1,0 +1,12 @@
+{{- $root := . }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "bind9.fullname" . }}-zones
+  labels: {{- include "bind9.labels" . | nindent 4 }}
+data:
+{{- range $path, $bytes := .Files.Glob "zones/*" }}
+{{- $content := $root.Files.Get $path | replace "\t" "        " }}
+  {{ $path | base }}: |
+{{ $content | indent 4 -}}
+{{ end -}}

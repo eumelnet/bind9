@@ -1,0 +1,18 @@
+BIND9 DNS server deployed.
+
+Service: {{ include "bind9.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local:53
+
+Zone files are in configmap/bind9-zones ({{ len (.Files.Glob "zones/*") }} zone files).
+Edit zones in the chart's zones/ directory, then run:
+  helm upgrade {{ .Release.Name }} . --namespace {{ .Release.Namespace }}
+  kubectl rollout restart statefulset/{{ include "bind9.fullname" . }} -n {{ .Release.Namespace }}
+
+To update a single zone directly (preserves Helm management):
+  kubectl set data configmap/{{ include "bind9.fullname" . }}-zones -n {{ .Release.Namespace }} --from-file=zonefile=/path/to/zone/file
+  kubectl rollout restart statefulset/{{ include "bind9.fullname" . }} -n {{ .Release.Namespace }}
+
+To expose via Traefik TCP/UDP proxy:
+
+Traefik übernimmt DNS-Routing automatisch über IngressRouteTCP/IngressRouteUDP CRDs,
+die bei Deployment mit der `traefik-helm-chart/values.yaml` als extraObjects definiert sind.
+Kein manuelles Patchen des Deployments nötig.

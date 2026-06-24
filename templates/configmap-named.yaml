@@ -1,0 +1,61 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "bind9.fullname" . }}-named
+  labels: {{- include "bind9.labels" . | nindent 4 }}
+data:
+  named.conf: |
+    {{ .Values.namedConfig.options | nindent 4 }}
+    {{ .Values.namedConfig.logging | nindent 4 }}
+    include "/etc/bind/named.conf.acls";
+    include "/etc/bind/named.conf.keys";
+    include "/etc/bind/named.conf.zones";
+    {{- range .Values.extraIncludes }}
+    include "{{ . }}";
+    {{- end }}
+
+  named.conf.options: |
+    {{ .Values.namedConfig.options | nindent 4 }}
+
+  named.conf.acls: |
+    {{- range .Values.namedConfig.acls }}
+    acl "{{ .name }}" {
+      {{- range .addresses }}
+      {{ . }};
+      {{- end }}
+    };
+    {{- end }}
+
+  named.conf.keys: |
+{{ .Values.namedConfig.keys | indent 3 }}
+  named.conf.zones: |
+    {{- range .Values.zones }}
+    zone "{{ .path }}" {
+      type {{ .type }};
+      file "{{ .file }}";
+      {{- if .alsoNotify }}
+      also-notify { {{ join "; " .alsoNotify }}; };
+      {{- end }}
+      {{- if .allowTransfer }}
+      allow-transfer { {{ join "; " .allowTransfer }}; };
+      {{- end }}
+      {{- if .allowQuery }}
+      allow-query { {{ join "; " .allowQuery }}; };
+      {{- end }}
+      {{- if .allowUpdate }}
+      allow-update { {{ join "; " .allowUpdate }}; };
+      {{- end }}
+      {{- if hasKey . "notify" }}
+      notify {{ .notify }};
+      {{- end }}
+      {{- if .masters }}
+      masters { {{ join "; " .masters }}; };
+      {{- end }}
+    };
+    {{- end }}
+
+  named.conf.local: |
+    // Local configuration
+    {{- if hasKey .Values "namedConfig" }}{{ if hasKey .Values.namedConfig "local" }}
+    {{ .Values.namedConfig.local | nindent 4 }}
+    {{- end }}{{ end }}

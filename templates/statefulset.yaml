@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "bind9.fullname" . }}
+  labels: {{- include "bind9.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  serviceName: {{ include "bind9.fullname" . }}
+  selector:
+    matchLabels: {{- include "bind9.matchLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels: {{- include "bind9.matchLabels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: bind9
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: 53
+              protocol: TCP
+            - containerPort: 53
+              protocol: UDP
+          resources: {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: config
+              mountPath: /etc/bind/named.conf
+              subPath: named.conf
+            - name: config
+              mountPath: /etc/bind/named.conf.options
+              subPath: named.conf.options
+            - name: config
+              mountPath: /etc/bind/named.conf.acls
+              subPath: named.conf.acls
+            - name: config
+              mountPath: /etc/bind/named.conf.keys
+              subPath: named.conf.keys
+            - name: config
+              mountPath: /etc/bind/named.conf.zones
+              subPath: named.conf.zones
+            - name: config
+              mountPath: /etc/bind/named.conf.local
+              subPath: named.conf.local
+            - name: zones
+              mountPath: /etc/bind/zones
+            {{- if .Values.persistence.enabled }}
+            - name: cache
+              mountPath: /var/cache/bind
+            {{- end }}
+      volumes:
+        - name: config
+          configMap:
+            name: {{ include "bind9.fullname" . }}-named
+        - name: zones
+          configMap:
+            name: {{ include "bind9.fullname" . }}-zones
+  {{- if .Values.persistence.enabled }}
+  volumeClaimTemplates:
+    - metadata:
+        name: cache
+      spec:
+        accessModes:
+          - {{ .Values.persistence.accessMode }}
+        resources:
+          requests:
+            storage: {{ .Values.persistence.size }}
+        {{- with .Values.persistence.storageClass }}
+        storageClassName: {{ . }}
+        {{- end }}
+  {{- end }}

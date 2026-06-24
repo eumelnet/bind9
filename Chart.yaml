@@ -1,0 +1,6 @@
+apiVersion: v2
+name: bind9
+description: ISC BIND9 DNS server as StatefulSet
+type: application
+version: 0.1.0
+appVersion: "9.18"
