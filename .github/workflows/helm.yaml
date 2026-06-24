@@ -14,7 +14,7 @@ jobs:
           curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
           helm version
           echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ghcr.io -u eumelnet --password-stdin
-          helm lint chart
-          helm package chart
+          helm lint .
+          helm package .
           helm push $(ls *.tgz| head -1) oci://ghcr.io/${{ github.repository_owner }}
 
