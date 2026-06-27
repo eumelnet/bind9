@@ -30,6 +30,10 @@ persistence:
   storageClass: ""
   accessMode: ReadWriteOnce
 
+# -- NetworkPolicy for DNS traffic (TCP/UDP 53)
+networkPolicy:
+  enabled: false
+
 # -- Config files to mount from named.conf ConfigMap
 # -- These are always mounted at /etc/bind/
 namedConfig:
